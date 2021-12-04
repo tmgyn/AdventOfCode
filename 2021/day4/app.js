@@ -3,22 +3,10 @@ const keyGen = (row, column) => `[${row},${column}]`
 const getRow = key => key.replace(/[\[\]']+/g, '').split(",")[0]
 const getColumn = key => key.replace(/[\[\]']+/g, '').split(",")[1]
 
-const validateRow = (map, k) => {
-  for (i = 0; i < 5; i++) {
-    let tmp = map.get(keyGen(getRow(k), i))
-    if (tmp.state === false) {
-      return false
-    }
-  }
-  throw "bingo"
-}
-
-const validateColumn = (map, k) => {
-  for (i = 0; i < 5; i++) {
-    let tmp = map.get(keyGen(i, getColumn(k)))
-    if (tmp.state === false) {
-      return false
-    }
+const size = 5
+const letValidate = (f) => {
+  for (i = 0; i < size; i++) {
+    if (!f(i).state) return
   }
   throw "bingo"
 }
@@ -28,21 +16,16 @@ const letBingo = (map, values, pos) => {
     try {
       if (v.value === values[pos]) {
         map.set(k, {...v, state: true})
-        validateRow(map, k)
-        validateColumn(map, k)
+        letValidate(i => map.get(keyGen(getRow(k), i)))
+        letValidate(i => map.get(keyGen(i, getColumn(k))))
       }
     } catch (e) {
-      const total = [...map].reduce((acc, v) => {
-        if (v[1].state === false) {
-          return acc + v[1].value
-        }
-        return acc
-      }, 0)
+      const total = [...map].reduce((acc, v) => v[1].state ? acc : acc + v[1].value, 0)
       res.push({rolls: pos, total: total * values[pos]})
       return
     }
   }
-  return pos < values.length ? letBingo(map, values, ++pos) : console.log("no bingo")
+  return pos < values.length ? letBingo(map, values, ++pos) : undefined
 }
 
 const f = (m) => {
